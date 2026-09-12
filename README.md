@@ -1,4 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Community Volunteer Hub
+
+Community Volunteer Hub is a web application that helps people find volunteer opportunities in their local community and allows organizations to post volunteer projects.
+
+## Team Members
+
+- Nicholas Goodsell
 
 ## Getting Started
 
