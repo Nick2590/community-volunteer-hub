@@ -5,6 +5,9 @@ Community Volunteer Hub is a web application that helps people find volunteer op
 ## Team Members
 
 - Nicholas Goodsell
+- Saul Abraham Arana Calderon
+- Benjamin Merari Flores
+- Cheuk Long Daiel Yim
 
 ## Getting Started
 
