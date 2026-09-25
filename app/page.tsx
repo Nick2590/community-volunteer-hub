@@ -1,33 +1,6 @@
 export default function Home() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <a href="#home" className="text-lg font-bold text-emerald-800">
-            Community Volunteer Hub
-          </a>
-          <nav aria-label="Main navigation">
-            <ul className="flex items-center gap-5 text-sm font-medium text-slate-700">
-              <li>
-                <a className="hover:text-emerald-700" href="#home">
-                  Home
-                </a>
-              </li>
-              <li>
-                <a className="hover:text-emerald-700" href="#opportunities">
-                  Opportunities
-                </a>
-              </li>
-              <li>
-                <a className="hover:text-emerald-700" href="#sign-in">
-                  Sign In
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </header>
-
       <main id="home" className="flex-1">
         <section className="bg-emerald-800 px-6 py-20 text-white sm:py-28">
           <div className="mx-auto max-w-3xl text-center">
@@ -82,10 +55,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      <footer id="sign-in" className="border-t border-slate-200 bg-white px-6 py-6 text-center text-sm text-slate-600">
-        <p id="post-opportunity">Community Volunteer Hub</p>
-      </footer>
     </div>
   );
 }
