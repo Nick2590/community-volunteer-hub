@@ -1,3 +1,4 @@
+import Link from 'next/link';
 export default function Home() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-slate-50 text-slate-900">
@@ -14,9 +15,10 @@ export default function Home() {
                 </a>
               </li>
               <li>
-                <a className="hover:text-emerald-700" href="#opportunities">
+                {/* Cambiado de #opportunities a /projects */}
+                <Link className="hover:text-emerald-700" href="/projects">
                   Opportunities
-                </a>
+                </Link>
               </li>
               <li>
                 <a className="hover:text-emerald-700" href="#sign-in">
@@ -38,12 +40,13 @@ export default function Home() {
               Discover local volunteer opportunities and connect with organizations that need your help.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <a
-                href="#opportunities"
+              {/* Cambiado de <a href="#opportunities"> a <Link href="/projects"> */}
+              <Link
+                href="/projects"
                 className="rounded-md bg-white px-5 py-3 text-center font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-800"
               >
                 Browse Opportunities
-              </a>
+              </Link>
               <a
                 href="#post-opportunity"
                 className="rounded-md border border-white px-5 py-3 text-center font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-800"
