@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { projects } from '@/data/projects';
+import ProjectSignupButton from '@/components/ProjectSignupButton';
 
 export default async function ProjectDetailPage({
   params,
@@ -28,28 +29,40 @@ export default async function ProjectDetailPage({
           <p className="text-sm font-semibold text-emerald-800">
             {project.organization}
           </p>
-          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{project.title}</h1>
+
+          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
+            {project.title}
+          </h1>
 
           <dl className="mt-6 grid gap-5 border-y border-slate-200 py-5 sm:grid-cols-2">
             <div>
               <dt className="text-sm font-medium text-slate-500">Date</dt>
               <dd className="mt-1 text-slate-900">{project.date}</dd>
             </div>
+
             <div>
               <dt className="text-sm font-medium text-slate-500">Location</dt>
               <dd className="mt-1 text-slate-900">{project.location}</dd>
             </div>
           </dl>
 
-          <section className="mt-6" aria-labelledby="project-description-heading">
+          <section
+            className="mt-6"
+            aria-labelledby="project-description-heading"
+          >
             <h2
               id="project-description-heading"
               className="text-lg font-semibold text-slate-900"
             >
               About this opportunity
             </h2>
-            <p className="mt-3 leading-7 text-slate-700">{project.description}</p>
+
+            <p className="mt-3 leading-7 text-slate-700">
+              {project.description}
+            </p>
           </section>
+
+          <ProjectSignupButton projectId={project.id} />
         </div>
       </article>
     </main>
