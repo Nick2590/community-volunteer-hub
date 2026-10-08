@@ -1,35 +1,50 @@
 import { compare } from 'bcryptjs';
-import { createHash, randomBytes, randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 
+import {
+  badRequest,
+  generateSessionToken,
+  hashSessionToken,
+  readJsonBody,
+  serverErrorResponse,
+  sessionExpiryDate,
+  setSessionCookie,
+} from '@/app/lib/auth';
+import { validateLogin } from '@/app/lib/auth-validation';
+import type { AuthResponse, AuthUser, UserRole } from '@/app/lib/auth-types';
 import { getDatabase } from '@/app/lib/db';
-import type { AuthUser, LoginInput } from '@/app/lib/auth-types';
 
 interface UserRow {
   id: string;
   name: string;
   email: string;
   password_hash: string;
-  role: 'VOLUNTEER' | 'ORGANIZATION';
+  role: UserRole;
 }
 
+const invalidCredentials = (): NextResponse<AuthResponse> =>
+  NextResponse.json(
+    { success: false, message: 'Invalid email or password.' },
+    { status: 401 },
+  );
+
 export async function POST(request: Request) {
+  const body = await readJsonBody(request);
+
+  if (body === undefined) {
+    return badRequest('Request body must be valid JSON.');
+  }
+
+  const result = validateLogin(body);
+
+  if (!result.ok) {
+    return badRequest(result.message);
+  }
+
+  const { email, password } = result.value;
+
   try {
-    const body = (await request.json()) as Partial<LoginInput>;
-
-    const email = body.email?.trim().toLowerCase();
-    const password = body.password;
-
-    if (!email || !password) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Email and password are required.',
-        },
-        { status: 400 },
-      );
-    }
-
     const sql = getDatabase();
 
     const users = (await sql`
@@ -41,37 +56,21 @@ export async function POST(request: Request) {
 
     const user = users[0];
 
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid email or password.',
-        },
-        { status: 401 },
-      );
+    if (!user || !(await compare(password, user.password_hash))) {
+      return invalidCredentials();
     }
 
-    const passwordMatches = await compare(password, user.password_hash);
-
-    if (!passwordMatches) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid email or password.',
-        },
-        { status: 401 },
-      );
-    }
-
-    const sessionId = randomUUID();
-    const sessionToken = randomBytes(32).toString('hex');
-    const tokenHash = createHash('sha256')
-      .update(sessionToken)
-      .digest('hex');
+    const sessionToken = generateSessionToken();
+    const expiresAt = sessionExpiryDate();
 
     await sql`
-      INSERT INTO sessions (id, user_id, token_hash)
-      VALUES (${sessionId}, ${user.id}, ${tokenHash})
+      INSERT INTO sessions (id, user_id, token_hash, expires_at)
+      VALUES (
+        ${randomUUID()},
+        ${user.id},
+        ${hashSessionToken(sessionToken)},
+        ${expiresAt.toISOString()}
+      )
     `;
 
     const authenticatedUser: AuthUser = {
@@ -85,26 +84,12 @@ export async function POST(request: Request) {
       success: true,
       message: 'Signed in successfully.',
       user: authenticatedUser,
-    });
+    } satisfies AuthResponse);
 
-    response.cookies.set('session_token', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
+    setSessionCookie(response, sessionToken);
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          'Sign-in is currently unavailable because the database connection is not configured.',
-      },
-      { status: 503 },
-    );
+    return serverErrorResponse('Login error', error);
   }
 }

@@ -12,8 +12,16 @@ CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token_hash TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days')
 );
+
+-- For databases created before session expiration was added
+ALTER TABLE sessions
+  ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days');
 
 CREATE INDEX IF NOT EXISTS sessions_user_id_idx
   ON sessions(user_id);
+
+CREATE INDEX IF NOT EXISTS sessions_expires_at_idx
+  ON sessions(expires_at);
