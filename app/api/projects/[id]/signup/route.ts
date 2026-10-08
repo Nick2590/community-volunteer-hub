@@ -1,157 +1,79 @@
-import { createHash, randomUUID } from 'crypto';
-import { cookies } from 'next/headers';
+import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 
+import {
+  getCurrentUser,
+  isUniqueViolation,
+  serverErrorResponse,
+} from '@/app/lib/auth';
+import type { AuthResponse } from '@/app/lib/auth-types';
 import { getDatabase } from '@/app/lib/db';
 import { projects } from '@/data/projects';
 
-interface SessionUserRow {
-  id: string;
-  role: 'VOLUNTEER' | 'ORGANIZATION';
-}
+const jsonResponse = (
+  message: string,
+  status: number,
+): NextResponse<AuthResponse> =>
+  NextResponse.json({ success: false, message }, { status });
 
-interface SignupCountRow {
-  count: number;
-}
+const alreadySignedUp = (): NextResponse<AuthResponse> =>
+  jsonResponse('You are already signed up for this project.', 409);
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id: projectId } = await params;
+
+  const project = projects.find(
+    (availableProject) => availableProject.id === projectId,
+  );
+
+  if (!project) {
+    return jsonResponse('Project not found.', 404);
+  }
+
   try {
-    const { id: projectId } = await params;
-
-    const project = projects.find(
-      (availableProject) => availableProject.id === projectId,
-    );
-
-    if (!project) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Project not found.',
-        },
-        { status: 404 },
-      );
-    }
-
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get('session_token')?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'You must sign in before signing up for a project.',
-        },
-        { status: 401 },
-      );
-    }
-
-    const tokenHash = createHash('sha256')
-      .update(sessionToken)
-      .digest('hex');
-
-    const sql = getDatabase();
-
-    const users = (await sql`
-      SELECT users.id, users.role
-      FROM sessions
-      INNER JOIN users ON users.id = sessions.user_id
-      WHERE sessions.token_hash = ${tokenHash}
-      LIMIT 1
-    `) as SessionUserRow[];
-
-    const user = users[0];
+    const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Your session is no longer valid.',
-        },
-        { status: 401 },
-      );
+      return jsonResponse('You must sign in before signing up for a project.', 401);
     }
 
     if (user.role !== 'VOLUNTEER') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Only volunteer accounts can sign up for projects.',
-        },
-        { status: 403 },
-      );
+      return jsonResponse('Only volunteer accounts can sign up for projects.', 403);
     }
 
-    const existingSignups = await sql`
-      SELECT id
-      FROM volunteer_signups
-      WHERE project_id = ${projectId}
-        AND volunteer_id = ${user.id}
-        AND status = 'CONFIRMED'
-      LIMIT 1
+    const sql = getDatabase();
+
+    // A single atomic statement: insert a new signup, or reactivate a CANCELED one.
+    // An already CONFIRMED signup matches the conflict but not the WHERE clause,
+    // so no row is returned. Concurrent duplicate requests cannot both succeed.
+    const signups = await sql`
+      INSERT INTO volunteer_signups (id, project_id, volunteer_id, status)
+      VALUES (${randomUUID()}, ${projectId}, ${user.id}, 'CONFIRMED')
+      ON CONFLICT (project_id, volunteer_id) DO UPDATE
+        SET status = 'CONFIRMED', signup_date = CURRENT_TIMESTAMP
+        WHERE volunteer_signups.status = 'CANCELED'
+      RETURNING id
     `;
 
-    if (existingSignups.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'You are already signed up for this project.',
-        },
-        { status: 409 },
-      );
+    if (signups.length === 0) {
+      return alreadySignedUp();
     }
-
-    const signupCounts = (await sql`
-      SELECT COUNT(*)::int AS count
-      FROM volunteer_signups
-      WHERE project_id = ${projectId}
-        AND status = 'CONFIRMED'
-    `) as SignupCountRow[];
-
-    const currentSignupCount = signupCounts[0]?.count ?? 0;
-
-    /*
-     * Project capacity is defined by the team specification, but the current
-     * project data on main does not yet include maxVolunteers. Capacity
-     * enforcement will be completed when the project database work is merged.
-     */
-    void currentSignupCount;
-
-    const signupId = randomUUID();
-
-    await sql`
-      INSERT INTO volunteer_signups (
-        id,
-        project_id,
-        volunteer_id,
-        status
-      )
-      VALUES (
-        ${signupId},
-        ${projectId},
-        ${user.id},
-        'CONFIRMED'
-      )
-    `;
 
     return NextResponse.json(
       {
         success: true,
         message: `You are signed up for ${project.title}.`,
-      },
+      } satisfies AuthResponse,
       { status: 201 },
     );
   } catch (error) {
-    console.error('Volunteer signup error:', error);
+    if (isUniqueViolation(error)) {
+      return alreadySignedUp();
+    }
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Unable to complete the project signup.',
-      },
-      { status: 500 },
-    );
+    return serverErrorResponse('Volunteer signup error', error);
   }
 }

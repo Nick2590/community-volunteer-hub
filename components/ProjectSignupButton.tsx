@@ -41,7 +41,7 @@ export default function ProjectSignupButton({
   }
 
   return (
-    <div className="mt-6">
+    <div className="flex flex-col items-end">
       <button
         type="button"
         onClick={handleSignup}
@@ -56,7 +56,7 @@ export default function ProjectSignupButton({
       </button>
 
       {message && (
-        <p className="mt-3 text-sm text-slate-700" role="status">
+        <p className="mt-3 text-right text-sm text-slate-700" role="status">
           {message}
         </p>
       )}

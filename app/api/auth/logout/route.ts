@@ -1,51 +1,37 @@
-import { createHash } from 'crypto';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+import {
+  clearSessionCookie,
+  hashSessionToken,
+  serverErrorResponse,
+} from '@/app/lib/auth';
+import { SESSION_COOKIE_NAME } from '@/app/lib/auth-config';
+import type { AuthResponse } from '@/app/lib/auth-types';
 import { getDatabase } from '@/app/lib/db';
 
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const sessionToken = cookieStore.get('session_token')?.value;
+    const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (sessionToken) {
-      const tokenHash = createHash('sha256')
-        .update(sessionToken)
-        .digest('hex');
-
       const sql = getDatabase();
 
       await sql`
-        DELETE FROM sessions
-        WHERE token_hash = ${tokenHash}
+        DELETE FROM sessions WHERE token_hash = ${hashSessionToken(sessionToken)}
       `;
     }
 
     const response = NextResponse.json({
       success: true,
       message: 'Signed out successfully.',
-    });
+    } satisfies AuthResponse);
 
-    response.cookies.set('session_token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 0,
-    });
+    clearSessionCookie(response);
 
     return response;
   } catch (error) {
-    console.error('Logout error:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          'Sign-out is currently unavailable because the database connection is not configured.',
-      },
-      { status: 503 },
-    );
+    return serverErrorResponse('Logout error', error);
   }
 }
