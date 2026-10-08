@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ProjectSignupButton from '@/components/ProjectSignupButton';
 import type { Organization, Project } from '@/types/project';
 
 interface ProjectDetailProps {
@@ -60,12 +61,7 @@ export default function ProjectDetail({ project, organization }: ProjectDetailPr
         )}
 
         <div className="mt-8 flex justify-end">
-          <button
-            type="button"
-            className="rounded-md bg-emerald-800 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
-          >
-            Sign Up for Project
-          </button>
+          <ProjectSignupButton projectId={project.id} />
         </div>
       </div>
     </article>

@@ -36,7 +36,7 @@ Registration, sign-in, and sessions are backed by PostgreSQL (via the Neon serve
 ### Setup
 
 1. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to your PostgreSQL connection string. Never commit real credentials.
-2. Apply the schema to your database: `psql "$DATABASE_URL" -f database/schema.sql` (safe to re-run; it also adds `sessions.expires_at` to older databases).
+2. Apply the schema to your database: `psql "$DATABASE_URL" -f database/schema.sql` (safe to re-run; it creates the `users`, `sessions` and `volunteer_signups` tables and adds `sessions.expires_at` to older databases). This single file is the complete schema.
 3. Restart the dev server after changing environment variables.
 
 ### Pages
@@ -53,6 +53,7 @@ Registration, sign-in, and sessions are backed by PostgreSQL (via the Neon serve
 | `/api/auth/login` | POST | Sign in with `email` and `password`. Returns 401 for invalid credentials. |
 | `/api/auth/logout` | POST | Delete the current session and clear the cookie. |
 | `/api/auth/me` | GET | Return the signed-in user, or 401 if there is no valid session. |
+| `/api/projects/[id]/signup` | POST | Sign the signed-in volunteer up for a project. Returns 401 if signed out or the session expired, 403 for organization accounts, 404 for an unknown project, and 409 if already signed up. A previously canceled signup is reactivated. Project capacity is not enforced yet. |
 
 ### Sessions
 
