@@ -1,24 +1,25 @@
 import { notFound } from 'next/navigation';
-import { getProjectById, getOrganizationById } from '@/lib/mock-data';
 import ProjectDetail from '@/components/ProjectDetail';
+import { getOrganizationById, projects } from '@/data/projects';
 
-interface ProjectDetailPageProps {
+export default async function ProjectDetailPage({
+  params,
+}: {
   params: Promise<{ id: string }>;
-}
-
-export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+}) {
   const { id } = await params;
-  const project = getProjectById(id);
+  const project = projects.find((availableProject) => availableProject.id === id);
 
   if (!project) {
     notFound();
   }
 
-  const organization = getOrganizationById(project.organizationId);
-
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <ProjectDetail project={project} organization={organization} />
+    <main className="min-h-full flex-1 bg-slate-50 px-6 py-12 text-slate-900 sm:py-16">
+      <ProjectDetail
+        project={project}
+        organization={getOrganizationById(project.organizationId)}
+      />
     </main>
   );
 }
