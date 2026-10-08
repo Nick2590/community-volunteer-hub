@@ -29,9 +29,9 @@ export default function NavLinks() {
                 </li>
                 <li>
                     <Link
-                        href="/signin"
-                        className={pathname === "/signin" ? "text-emerald-700" : ""}
-                        aria-current={pathname === "/signin" ? "page" : undefined}
+                        href="/login"
+                        className={pathname === "/login" ? "text-emerald-700" : ""}
+                        aria-current={pathname === "/login" ? "page" : undefined}
                     >
                     Sign in
                     </Link>
