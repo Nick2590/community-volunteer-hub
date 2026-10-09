@@ -57,6 +57,14 @@ export default function ProjectDetail({ project, organization }: ProjectDetailPr
                 {organization.contactEmail}
               </a>
             </p>
+            <p className="mt-3 text-sm">
+              <Link
+                href={`/organizations/${organization.id}`}
+                className="font-semibold text-emerald-800 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+              >
+                View {organization.name} profile
+              </Link>
+            </p>
           </section>
         )}
 

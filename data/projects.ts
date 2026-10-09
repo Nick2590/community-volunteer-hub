@@ -39,6 +39,7 @@ export const organizations: Organization[] = [
     description:
       'A neighborhood group dedicated to local cleanup efforts and sustainability initiatives.',
     contactEmail: 'contact@greenwayalliance.org',
+    phoneNumber: '503-200-3355',
   },
   {
     id: 'northside-neighbors-network',
@@ -46,6 +47,7 @@ export const organizations: Organization[] = [
     description:
       'Providing food and support to families in need across the Northside community.',
     contactEmail: 'info@northsideneighbors.org',
+    phoneNumber: '503-282-0555',
   },
   {
     id: 'rose-city-youth-literacy',
@@ -53,6 +55,7 @@ export const organizations: Organization[] = [
     description:
       'Helping elementary school students build reading skills and confidence through volunteer mentoring.',
     contactEmail: 'hello@rosecityliteracy.org',
+    phoneNumber: '503-844-9571',
   },
 ];
 

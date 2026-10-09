@@ -3,6 +3,7 @@ export interface Organization {
   name: string;
   description: string;
   contactEmail: string;
+  phoneNumber?: string;
 }
 
 export interface Project {
