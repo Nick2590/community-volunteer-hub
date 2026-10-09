@@ -29,6 +29,40 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Authentication
+
+Registration, sign-in, and sessions are backed by PostgreSQL (via the Neon serverless driver).
+
+### Setup
+
+1. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to your PostgreSQL connection string. Never commit real credentials.
+2. Apply the schema to your database: `psql "$DATABASE_URL" -f database/schema.sql` (safe to re-run; it creates the `users`, `sessions` and `volunteer_signups` tables and adds `sessions.expires_at` to older databases). This single file is the complete schema.
+3. Restart the dev server after changing environment variables.
+
+### Pages
+
+- `/register` - create a Volunteer or Organization account
+- `/login` - sign in
+- `/account` - view the signed-in account and sign out
+
+### API routes
+
+| Route | Method | Description |
+| --- | --- | --- |
+| `/api/auth/register` | POST | Create an account (`name`, `email`, `password` of 8+ characters, `role`: `volunteer` or `organization`). Returns 400 for invalid input and 409 for a duplicate email. |
+| `/api/auth/login` | POST | Sign in with `email` and `password`. Returns 401 for invalid credentials. |
+| `/api/auth/logout` | POST | Delete the current session and clear the cookie. |
+| `/api/auth/me` | GET | Return the signed-in user, or 401 if there is no valid session. |
+| `/api/projects/[id]/signup` | POST | Sign the signed-in volunteer up for a project. Returns 401 if signed out or the session expired, 403 for organization accounts, 404 for an unknown project, and 409 if already signed up. A previously canceled signup is reactivated. Project capacity is not enforced yet. |
+
+### Sessions
+
+- Passwords are hashed with bcrypt (cost 12).
+- Signing in creates a random session token. Only its SHA-256 hash is stored in the `sessions` table.
+- The token is sent in an HTTP-only, `SameSite=Lax` cookie (`Secure` in production) that lasts 7 days; the session row expires at the same time.
+- Expired sessions are rejected and deleted. Signing out deletes the session immediately.
+- Server code can call `getCurrentUser()` from `app/lib/auth.ts` to protect routes and actions.
+- Without `DATABASE_URL`, auth endpoints that need the database return 503.
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

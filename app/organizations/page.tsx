@@ -1,19 +1,21 @@
+import type { Metadata } from 'next';
 import OrganizationCard from '@/components/OrganizationCard';
-import { organizations } from '@/data/organizations';
+import { organizations } from '@/data/projects';
+
+export const metadata: Metadata = {
+  title: 'Organizations | Community Volunteer Hub',
+  description:
+    'Browse the community organizations that offer volunteer opportunities on Community Volunteer Hub.',
+};
 
 export default function OrganizationsPage() {
   return (
     <main className="min-h-full flex-1 bg-slate-50 px-6 py-12 text-slate-900 sm:py-16">
       <div className="mx-auto w-full max-w-6xl">
         <header>
-          <p className="text-sm font-semibold text-emerald-800">
-            Partners
-          </p>
-          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
-            Organizations
-          </h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">Organizations</h1>
           <p className="mt-4 max-w-2xl leading-7 text-slate-600">
-            These people provide opportunities for volunteer work.
+            These organizations offer volunteer opportunities in our community.
           </p>
         </header>
 
@@ -27,7 +29,7 @@ export default function OrganizationsPage() {
           </ul>
         ) : (
           <p className="mt-8 rounded-md border border-slate-200 bg-white p-6 text-slate-700">
-            There are no organization providing volunteer opportunities.
+            No organizations are available.
           </p>
         )}
       </div>
