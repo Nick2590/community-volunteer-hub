@@ -22,6 +22,7 @@ Community Volunteer Hub connects volunteers with local organizations and communi
 - Volunteer and Organization account registration
 - Email-and-password sign-in, account information, and sign-out
 - Volunteer project signup, including duplicate-signup prevention and reactivation of canceled signups
+- Volunteer dashboard for viewing joined projects and canceling confirmed signups
 - Project creation form at `/projects/new` with required-field validation; it does not save projects yet
 
 Project listings are currently provided by application data and are not managed through a project API.
@@ -43,6 +44,7 @@ Project listings are currently provided by application data and are not managed 
 | `/`                   | Homepage                                                                           |
 | `/projects`           | Browse and search volunteer opportunities                                          |
 | `/projects/[id]`      | View a project and its signup option                                               |
+| `/dashboard`          | View volunteer project signups and cancel confirmed signups                        |
 | `/projects/new`       | Project creation form; database saving and organization-only access are unfinished |
 | `/organizations`      | Browse organizations                                                               |
 | `/organizations/[id]` | View an organization                                                               |
@@ -133,7 +135,9 @@ Passwords are hashed with bcrypt using cost factor 12. On sign-in, the applicati
 | `/api/auth/login`           | POST   | Signs in with `email` and `password`. Returns 400 for invalid input and 401 for invalid credentials.                                                                                                                            |
 | `/api/auth/logout`          | POST   | Deletes the current database session when present and clears the session cookie.                                                                                                                                                |
 | `/api/auth/me`              | GET    | Returns the signed-in user, or 401 when no valid session exists.                                                                                                                                                                |
+| `/api/volunteer/dashboard`  | GET    | Returns the authenticated volunteer's name and project signup details. Returns 401 when signed out and 403 for Organization accounts.                                                                                           |
 | `/api/projects/[id]/signup` | POST   | Signs up the current Volunteer for an existing project. Returns 401 when signed out, 403 for Organization accounts, 404 for an unknown project, and 409 for an existing confirmed signup. A canceled signup can be reactivated. |
+| `/api/projects/[id]/signup` | DELETE | Cancels the authenticated volunteer's confirmed signup for the project. Returns 401 when signed out, 403 for Organization accounts, and 404 when the project or confirmed signup is not found.                                  |
 
 Project signup records are stored in PostgreSQL. The project is looked up in the current application data, and there are no project creation, editing, or deletion API routes yet.
 
@@ -149,13 +153,12 @@ To deploy another instance:
 2. Add `DATABASE_URL` in the Vercel project settings.
 3. Apply [`database/schema.sql`](./database/schema.sql) to the Neon database used by the deployment.
 4. Deploy the application.
-5. Verify registration, sign-in, project browsing, and volunteer signup in the deployed environment.
+5. Verify registration, sign-in, project browsing, volunteer dashboard access, signup, and cancellation in the deployed environment.
 
 Never expose database credentials in client-side environment variables.
 
 ## Known Issues and Unfinished Features
 
-- **Issue #8 — Volunteer dashboard:** unfinished.
 - **Issue #9 — Project creation:** the form is implemented, but saving projects to the database and restricting creation to Organization accounts are unfinished.
 - **Issue #10 — Project editing and deleting:** unfinished.
 - The homepage's Post an Opportunity button should link to `/projects/new` instead of the footer.

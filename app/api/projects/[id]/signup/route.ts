@@ -77,3 +77,51 @@ export async function POST(
     return serverErrorResponse('Volunteer signup error', error);
   }
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id: projectId } = await params;
+
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonResponse('You must sign in before canceling a project signup.', 401);
+    }
+
+    if (user.role !== 'VOLUNTEER') {
+      return jsonResponse('Only volunteer accounts can cancel project signups.', 403);
+    }
+
+    const project = projects.find(
+      (availableProject) => availableProject.id === projectId,
+    );
+
+    if (!project) {
+      return jsonResponse('Project not found.', 404);
+    }
+
+    const sql = getDatabase();
+    const signups = await sql`
+      UPDATE volunteer_signups
+      SET status = 'CANCELED'
+      WHERE project_id = ${projectId}
+        AND volunteer_id = ${user.id}
+        AND status = 'CONFIRMED'
+      RETURNING id
+    `;
+
+    if (signups.length === 0) {
+      return jsonResponse('No confirmed signup was found for this project.', 404);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Your signup for ${project.title} was canceled.`,
+    } satisfies AuthResponse);
+  } catch (error) {
+    return serverErrorResponse('Volunteer signup cancellation error', error);
+  }
+}
