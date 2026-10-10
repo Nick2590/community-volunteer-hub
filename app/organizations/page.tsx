@@ -3,7 +3,7 @@ import OrganizationCard from '@/components/OrganizationCard';
 import { organizations } from '@/data/projects';
 
 export const metadata: Metadata = {
-  title: 'Organizations | Community Volunteer Hub',
+  title: 'Organizations',
   description:
     'Browse the community organizations that offer volunteer opportunities on Community Volunteer Hub.',
 };

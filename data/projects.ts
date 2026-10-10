@@ -62,3 +62,7 @@ export const organizations: Organization[] = [
 export function getOrganizationById(id: string | undefined): Organization | undefined {
   return id ? organizations.find((organization) => organization.id === id) : undefined;
 }
+
+export function getProjectById(id: string | undefined): Project | undefined {
+  return id ? projects.find((project) => project.id === id) : undefined;
+}

@@ -17,11 +17,11 @@ export async function generateMetadata({
   const organization = getOrganizationById(id);
 
   if (!organization) {
-    return { title: 'Organization not found | Community Volunteer Hub' };
+    return { title: 'Organization not found' };
   }
 
   return {
-    title: `${organization.name} | Community Volunteer Hub`,
+    title: `${organization.name}`,
     description: organization.description,
   };
 }
