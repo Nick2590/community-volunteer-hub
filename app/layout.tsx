@@ -31,8 +31,20 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-emerald-800 focus:px-4 focus:py-2 focus:font-semibold focus:text-white focus:outline-2 focus:outline-offset-2 focus:outline-emerald-700"
+        >
+          Skip to main content
+        </a>
         <Header />
-        {children}
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="flex flex-1 flex-col focus:outline-none"
+        >
+          {children}
+        </div>
         <Footer />
       </body>
     </html>

@@ -218,19 +218,19 @@ export default function VolunteerDashboard() {
 
                       <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm">
                         <div>
-                          <dt className="font-medium text-slate-500">Project date</dt>
+                          <dt className="font-medium text-slate-600">Project date</dt>
                           <dd className="mt-1 text-slate-800">
                             {signup.date || 'Unavailable'}
                           </dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-slate-500">Location</dt>
+                          <dt className="font-medium text-slate-600">Location</dt>
                           <dd className="mt-1 text-slate-800">
                             {signup.location || 'Unavailable'}
                           </dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-slate-500">Signup status</dt>
+                          <dt className="font-medium text-slate-600">Signup status</dt>
                           <dd
                             className={
                               signup.status === 'CONFIRMED'

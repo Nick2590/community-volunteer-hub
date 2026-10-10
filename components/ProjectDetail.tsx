@@ -29,11 +29,11 @@ export default function ProjectDetail({
 
         <dl className="mt-6 grid gap-5 border-y border-slate-200 py-5 sm:grid-cols-2">
           <div>
-            <dt className="text-sm font-medium text-slate-500">Date</dt>
+            <dt className="text-sm font-medium text-slate-600">Date</dt>
             <dd className="mt-1 text-slate-900">{project.date}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-slate-500">Location</dt>
+            <dt className="text-sm font-medium text-slate-600">Location</dt>
             <dd className="mt-1 text-slate-900">{project.location}</dd>
           </div>
         </dl>

@@ -9,12 +9,14 @@ import type { AuthResponse } from '@/app/lib/auth-types';
 export default function LoginPage() {
   const router = useRouter();
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setMessage('');
+    setIsError(false);
     setIsSubmitting(true);
 
     const form = event.currentTarget;
@@ -38,11 +40,14 @@ export default function LoginPage() {
       const data = (await response.json()) as AuthResponse;
 
       setMessage(data.message);
+      setIsError(!response.ok);
 
       if (response.ok) {
         router.push('/account');
+        router.refresh();
       }
     } catch {
+      setIsError(true);
       setMessage(
         'Unable to sign in right now. Please try again later.',
       );
@@ -52,7 +57,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-md flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-md flex-1 bg-slate-50 px-4 py-12 text-slate-900 sm:px-6">
       <h1 className="text-3xl font-bold text-slate-900">Sign In</h1>
 
       <p className="mt-2 text-slate-600">
@@ -73,7 +78,7 @@ export default function LoginPage() {
             type="email"
             required
             autoComplete="email"
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           />
         </div>
 
@@ -90,23 +95,26 @@ export default function LoginPage() {
             type="password"
             required
             autoComplete="current-password"
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           />
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-md bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-emerald-800 px-4 py-2 font-semibold text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? 'Signing In...' : 'Sign In'}
         </button>
 
         {message && (
           <p
-            className="text-sm text-slate-600"
-            role="status"
-            aria-live="polite"
+            className={
+              isError
+                ? 'rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-800'
+                : 'text-sm text-slate-600'
+            }
+            role={isError ? 'alert' : 'status'}
           >
             {message}
           </p>
@@ -117,7 +125,7 @@ export default function LoginPage() {
         Don&apos;t have an account?{' '}
         <Link
           href="/register"
-          className="font-semibold text-emerald-700 hover:text-emerald-800"
+          className="font-semibold text-emerald-700 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
         >
           Create Account
         </Link>
@@ -126,7 +134,7 @@ export default function LoginPage() {
       <p className="mt-3 text-center text-sm">
         <Link
           href="/"
-          className="text-slate-600 hover:text-emerald-700"
+          className="text-slate-600 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
         >
           Back to Home
         </Link>

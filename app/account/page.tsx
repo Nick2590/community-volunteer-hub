@@ -63,7 +63,7 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-2xl flex-1 bg-slate-50 px-4 py-12 text-slate-900 sm:px-6">
       <h1 className="text-3xl font-bold text-slate-900">My Account</h1>
 
       {message && (
@@ -102,7 +102,7 @@ export default function AccountPage() {
             type="button"
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="mt-6 rounded-md bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-6 rounded-md bg-emerald-800 px-4 py-2 font-semibold text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSigningOut ? 'Signing Out...' : 'Sign Out'}
           </button>
@@ -112,7 +112,7 @@ export default function AccountPage() {
       <p className="mt-6">
         <Link
           href="/"
-          className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+          className="text-sm font-semibold text-emerald-700 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
         >
           Back to Home
         </Link>
