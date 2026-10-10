@@ -136,11 +136,13 @@ Passwords are hashed with bcrypt using cost factor 12. On sign-in, the applicati
 | `/api/auth/logout`          | POST   | Deletes the current database session when present and clears the session cookie.                                                                                                                                                |
 | `/api/auth/me`              | GET    | Returns the signed-in user, or 401 when no valid session exists.                                                                                                                                                                |
 | `/api/projects`             | POST   | Creates a project for the signed-in Organization account. Returns 401 when signed out, 403 for Volunteer accounts, 400 for invalid input, and 201 with the created project's public data on success.                            |
+| `/api/projects/[id]`        | PATCH  | Updates a database-backed project owned by the signed-in Organization account. Returns 401 when signed out, 403 for Volunteer accounts, 404 for sample, missing, invalid, or non-owned projects, and 400 for invalid input.     |
+| `/api/projects/[id]`        | DELETE | Deletes a database-backed project owned by the signed-in Organization account. Existing confirmed volunteer signups are marked CANCELED atomically before the project is deleted. Returns 401 when signed out, 403 for Volunteer accounts, and 404 for sample, missing, invalid, or non-owned projects. |
 | `/api/volunteer/dashboard`  | GET    | Returns the authenticated volunteer's name and project signup details. Returns 401 when signed out and 403 for Organization accounts.                                                                                           |
 | `/api/projects/[id]/signup` | POST   | Signs up the current Volunteer for an existing project. Returns 401 when signed out, 403 for Organization accounts, 404 for an unknown project, and 409 for an existing confirmed signup. A canceled signup can be reactivated. |
 | `/api/projects/[id]/signup` | DELETE | Cancels the authenticated volunteer's confirmed signup for the project. Returns 401 when signed out, 403 for Organization accounts, and 404 when the project or confirmed signup is not found.                                  |
 
-Project signup records are stored in PostgreSQL. Sample projects retain their existing IDs and details; database projects are read through the shared server-side project data layer and appear alongside those samples. Project creation ownership is derived from the authenticated Organization account, not from submitted form data.
+Project signup records are stored in PostgreSQL. Sample projects retain their existing IDs and details; database projects are read through the shared server-side project data layer and appear alongside those samples. Project creation and editing ownership is derived from the authenticated Organization account, not from submitted form data. When an organization deletes one of its database-backed projects, existing confirmed volunteer signups are preserved as history and changed to `CANCELED` before the project record is removed.
 
 ## Deployment
 
@@ -154,17 +156,15 @@ To deploy another instance:
 2. Add `DATABASE_URL` in the Vercel project settings.
 3. Apply [`database/schema.sql`](./database/schema.sql) to the Neon database used by the deployment.
 4. Deploy the application.
-5. Verify registration, sign-in, project browsing, volunteer dashboard access, signup, and cancellation in the deployed environment.
+5. Verify registration, sign-in, project browsing, organization project creation/editing/deletion, volunteer dashboard access, signup, and cancellation in the deployed environment.
 
 Never expose database credentials in client-side environment variables.
 
 ## Known Issues and Unfinished Features
 
 - **Issue #9 — Project creation:** organizations can create projects through `/projects/new` and `POST /api/projects`, and projects are saved to the Neon `projects` table. Complete; real database integration testing passed.
-- **Issue #10 — Project editing and deleting:** unfinished.
 - The homepage's Post an Opportunity button should link to `/projects/new` instead of the footer.
 - Header navigation for authenticated users should make My Account and Sign Out easier to access.
-- Database project creation and listing require the new `projects` table to be applied to Neon.
 - Volunteer signup does not enforce project capacity.
 - Complete Lighthouse mobile testing and CSS Overview color-contrast verification.
 
