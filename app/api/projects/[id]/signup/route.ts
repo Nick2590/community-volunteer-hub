@@ -8,11 +8,11 @@ import {
 } from '@/app/lib/auth';
 import type { AuthResponse } from '@/app/lib/auth-types';
 import { getDatabase } from '@/app/lib/db';
-import { projects } from '@/data/projects';
+import { getProjectById } from '@/app/lib/projects';
 
 const jsonResponse = (
   message: string,
-  status: number,
+  status: number
 ): NextResponse<AuthResponse> =>
   NextResponse.json({ success: false, message }, { status });
 
@@ -21,27 +21,31 @@ const alreadySignedUp = (): NextResponse<AuthResponse> =>
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: projectId } = await params;
-
-  const project = projects.find(
-    (availableProject) => availableProject.id === projectId,
-  );
-
-  if (!project) {
-    return jsonResponse('Project not found.', 404);
-  }
 
   try {
     const user = await getCurrentUser();
 
     if (!user) {
-      return jsonResponse('You must sign in before signing up for a project.', 401);
+      return jsonResponse(
+        'You must sign in before signing up for a project.',
+        401
+      );
     }
 
     if (user.role !== 'VOLUNTEER') {
-      return jsonResponse('Only volunteer accounts can sign up for projects.', 403);
+      return jsonResponse(
+        'Only volunteer accounts can sign up for projects.',
+        403
+      );
+    }
+
+    const project = await getProjectById(projectId);
+
+    if (!project) {
+      return jsonResponse('Project not found.', 404);
     }
 
     const sql = getDatabase();
@@ -67,7 +71,7 @@ export async function POST(
         success: true,
         message: `You are signed up for ${project.title}.`,
       } satisfies AuthResponse,
-      { status: 201 },
+      { status: 201 }
     );
   } catch (error) {
     if (isUniqueViolation(error)) {
@@ -75,5 +79,60 @@ export async function POST(
     }
 
     return serverErrorResponse('Volunteer signup error', error);
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: projectId } = await params;
+
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return jsonResponse(
+        'You must sign in before canceling a project signup.',
+        401
+      );
+    }
+
+    if (user.role !== 'VOLUNTEER') {
+      return jsonResponse(
+        'Only volunteer accounts can cancel project signups.',
+        403
+      );
+    }
+
+    const project = await getProjectById(projectId);
+
+    if (!project) {
+      return jsonResponse('Project not found.', 404);
+    }
+
+    const sql = getDatabase();
+    const signups = await sql`
+      UPDATE volunteer_signups
+      SET status = 'CANCELED'
+      WHERE project_id = ${projectId}
+        AND volunteer_id = ${user.id}
+        AND status = 'CONFIRMED'
+      RETURNING id
+    `;
+
+    if (signups.length === 0) {
+      return jsonResponse(
+        'No confirmed signup was found for this project.',
+        404
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Your signup for ${project.title} was canceled.`,
+    } satisfies AuthResponse);
+  } catch (error) {
+    return serverErrorResponse('Volunteer signup cancellation error', error);
   }
 }

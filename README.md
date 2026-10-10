@@ -1,87 +1,180 @@
 # Community Volunteer Hub
 
-Community Volunteer Hub is a web application that helps people find volunteer opportunities in their local community and allows organizations to post volunteer projects.
+Community Volunteer Hub connects volunteers with local organizations and community service opportunities. Volunteers can browse and search sample and organization-created project listings, view project and organization details, create accounts, and sign up for projects. Organization-created projects are stored in Neon PostgreSQL.
+
+## Live Application
+
+[https://community-volunteer-hub-ebon.vercel.app/](https://community-volunteer-hub-ebon.vercel.app/)
 
 ## Team Members
 
 - Nicholas Goodsell
 - Saul Abraham Arana Calderon
 - Benjamin Merari Flores
-- Cheuk Long Daiel Yim
+- Cheuk Long Daniel Yim
 
-## Getting Started
+## Features
 
-First, run the development server:
+- Homepage introducing the Community Volunteer Hub
+- Browse and search volunteer opportunities
+- Individual project details
+- Organization listings and details
+- Volunteer and Organization account registration
+- Email-and-password sign-in, account information, and sign-out
+- Volunteer project signup, including duplicate-signup prevention and reactivation of canceled signups
+- Volunteer dashboard for viewing joined projects and canceling confirmed signups
+- Organization-only project creation at `/projects/new`; projects are associated with the signed-in organization account
+
+The existing sample projects remain available alongside database projects. Newly created database projects appear in the same opportunity list, search results, and project detail route.
+
+## Technologies
+
+- Next.js with App Router
+- React and TypeScript
+- Tailwind CSS
+- Neon PostgreSQL with the Neon serverless driver
+- bcryptjs for password hashing
+- Vercel
+- ESLint and Prettier
+
+## Application Pages
+
+| Route                 | Description                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| `/`                   | Homepage                                                    |
+| `/projects`           | Browse and search volunteer opportunities                   |
+| `/projects/[id]`      | View a project and its signup option                        |
+| `/dashboard`          | View volunteer project signups and cancel confirmed signups |
+| `/projects/new`       | Organization-only project creation form                     |
+| `/organizations`      | Browse organizations                                        |
+| `/organizations/[id]` | View an organization                                        |
+| `/register`           | Create a Volunteer or Organization account                  |
+| `/login`              | Sign in                                                     |
+| `/account`            | View account information and sign out                       |
+
+## Local Setup
+
+### Requirements
+
+- Node.js and npm
+- A Neon PostgreSQL database for authentication, volunteer signups, and organization-created projects
+- The PostgreSQL command-line client (`psql`) to apply the schema
+
+### Install and configure
+
+1. Clone the repository and move into its directory:
+
+   ```bash
+   git clone https://github.com/Nick2590/community-volunteer-hub.git
+   cd community-volunteer-hub
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to the connection string for your Neon database. Keep the connection string secret and never commit `.env.local`.
+
+   `.env.example` documents the only environment variable currently used by the application:
+
+   | Variable       | Required                          | Description                       |
+   | -------------- | --------------------------------- | --------------------------------- |
+   | `DATABASE_URL` | Yes, for database-backed features | Neon PostgreSQL connection string |
+
+4. Apply the database schema as described in [Neon Database Setup](#neon-database-setup).
+
+5. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000).
+
+### Build and lint
+
+Run a production build:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run ESLint:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Neon Database Setup
+
+1. Create a PostgreSQL project in [Neon](https://neon.tech/) and copy its connection string from the Neon dashboard.
+2. Set that string as `DATABASE_URL` in `.env.local` for local development. Configure the same variable in the Vercel project settings for deployment; do not expose it through a `NEXT_PUBLIC_` variable.
+3. Ensure `psql` is installed and apply [`database/schema.sql`](./database/schema.sql) to the Neon database. Use the connection string in place of `<NEON_CONNECTION_STRING>`:
+
+   ```bash
+   psql "<NEON_CONNECTION_STRING>" -f database/schema.sql
+   ```
+
+   This creates the `users`, `sessions`, `volunteer_signups`, and `projects` tables, indexes, and constraints. It also adds `sessions.expires_at` to existing session tables when needed. The project table links ownership to the organization account in `users`; applying this schema is required for project creation and database-backed project listings.
+
+4. Keep database credentials out of source control. The local `.env.local` file should not be committed.
 
 ## Authentication
 
-Registration, sign-in, and sessions are backed by PostgreSQL (via the Neon serverless driver).
+Authentication uses custom email-and-password flows backed by Neon PostgreSQL; the project does not use Auth.js or Clerk. Register at `/register` with a name, email, password of at least eight characters, and either the Volunteer or Organization role. Sign in at `/login`; the `/account` page shows the current account and provides sign-out.
 
-### Setup
+Passwords are hashed with bcrypt using cost factor 12. On sign-in, the application creates a random session token and stores only its SHA-256 hash in the `sessions` table. The session cookie is HTTP-only and `SameSite=Lax`, with `Secure` enabled in production. Sessions expire after seven days; expired sessions are rejected and removed, and signing out deletes the database session. Server-side code can use `getCurrentUser()` from [`app/lib/auth.ts`](./app/lib/auth.ts) to check the signed-in user. Authentication endpoints that need the database return HTTP 503 when `DATABASE_URL` is not configured.
 
-1. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to your PostgreSQL connection string. Never commit real credentials.
-2. Apply the schema to your database: `psql "$DATABASE_URL" -f database/schema.sql` (safe to re-run; it creates the `users`, `sessions` and `volunteer_signups` tables and adds `sessions.expires_at` to older databases). This single file is the complete schema.
-3. Restart the dev server after changing environment variables.
+## API Documentation
 
-### Pages
+| Route                       | Method | Description                                                                                                                                                                                                                     |
+| --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/auth/register`        | POST   | Creates an account from `name`, `email`, `password` (at least eight characters), and `role` (`volunteer` or `organization`). Returns 400 for invalid input and 409 for a duplicate email.                                       |
+| `/api/auth/login`           | POST   | Signs in with `email` and `password`. Returns 400 for invalid input and 401 for invalid credentials.                                                                                                                            |
+| `/api/auth/logout`          | POST   | Deletes the current database session when present and clears the session cookie.                                                                                                                                                |
+| `/api/auth/me`              | GET    | Returns the signed-in user, or 401 when no valid session exists.                                                                                                                                                                |
+| `/api/projects`             | POST   | Creates a project for the signed-in Organization account. Returns 401 when signed out, 403 for Volunteer accounts, 400 for invalid input, and 201 with the created project's public data on success.                            |
+| `/api/projects/[id]`        | PATCH  | Updates a database-backed project owned by the signed-in Organization account. Returns 401 when signed out, 403 for Volunteer accounts, 404 for sample, missing, invalid, or non-owned projects, and 400 for invalid input.     |
+| `/api/projects/[id]`        | DELETE | Deletes a database-backed project owned by the signed-in Organization account. Existing confirmed volunteer signups are marked CANCELED atomically before the project is deleted. Returns 401 when signed out, 403 for Volunteer accounts, and 404 for sample, missing, invalid, or non-owned projects. |
+| `/api/volunteer/dashboard`  | GET    | Returns the authenticated volunteer's name and project signup details. Returns 401 when signed out and 403 for Organization accounts.                                                                                           |
+| `/api/projects/[id]/signup` | POST   | Signs up the current Volunteer for an existing project. Returns 401 when signed out, 403 for Organization accounts, 404 for an unknown project, and 409 for an existing confirmed signup. A canceled signup can be reactivated. |
+| `/api/projects/[id]/signup` | DELETE | Cancels the authenticated volunteer's confirmed signup for the project. Returns 401 when signed out, 403 for Organization accounts, and 404 when the project or confirmed signup is not found.                                  |
 
-- `/register` - create a Volunteer or Organization account
-- `/login` - sign in
-- `/account` - view the signed-in account and sign out
+Project signup records are stored in PostgreSQL. Sample projects retain their existing IDs and details; database projects are read through the shared server-side project data layer and appear alongside those samples. Project creation and editing ownership is derived from the authenticated Organization account, not from submitted form data. When an organization deletes one of its database-backed projects, existing confirmed volunteer signups are preserved as history and changed to `CANCELED` before the project record is removed.
 
-### API routes
+## Deployment
 
-| Route | Method | Description |
-| --- | --- | --- |
-| `/api/auth/register` | POST | Create an account (`name`, `email`, `password` of 8+ characters, `role`: `volunteer` or `organization`). Returns 400 for invalid input and 409 for a duplicate email. |
-| `/api/auth/login` | POST | Sign in with `email` and `password`. Returns 401 for invalid credentials. |
-| `/api/auth/logout` | POST | Delete the current session and clear the cookie. |
-| `/api/auth/me` | GET | Return the signed-in user, or 401 if there is no valid session. |
-| `/api/projects/[id]/signup` | POST | Sign the signed-in volunteer up for a project. Returns 401 if signed out or the session expired, 403 for organization accounts, 404 for an unknown project, and 409 if already signed up. A previously canceled signup is reactivated. Project capacity is not enforced yet. |
+The application is deployed on Vercel:
 
-### Sessions
+[https://community-volunteer-hub-ebon.vercel.app/](https://community-volunteer-hub-ebon.vercel.app/)
 
-- Passwords are hashed with bcrypt (cost 12).
-- Signing in creates a random session token. Only its SHA-256 hash is stored in the `sessions` table.
-- The token is sent in an HTTP-only, `SameSite=Lax` cookie (`Secure` in production) that lasts 7 days; the session row expires at the same time.
-- Expired sessions are rejected and deleted. Signing out deletes the session immediately.
-- Server code can call `getCurrentUser()` from `app/lib/auth.ts` to protect routes and actions.
-- Without `DATABASE_URL`, auth endpoints that need the database return 503.
-## Learn More
+To deploy another instance:
 
-To learn more about Next.js, take a look at the following resources:
+1. Import the GitHub repository into Vercel.
+2. Add `DATABASE_URL` in the Vercel project settings.
+3. Apply [`database/schema.sql`](./database/schema.sql) to the Neon database used by the deployment.
+4. Deploy the application.
+5. Verify registration, sign-in, project browsing, organization project creation/editing/deletion, volunteer dashboard access, signup, and cancellation in the deployed environment.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Never expose database credentials in client-side environment variables.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Known Issues and Unfinished Features
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Issue #9 — Project creation:** organizations can create projects through `/projects/new` and `POST /api/projects`, and projects are saved to the Neon `projects` table. Complete; real database integration testing passed.
+- The homepage's Post an Opportunity button should link to `/projects/new` instead of the footer.
+- Header navigation for authenticated users should make My Account and Sign Out easier to access.
+- Volunteer signup does not enforce project capacity.
+- Complete Lighthouse mobile testing and CSS Overview color-contrast verification.
 
 ## Development Workflow
 
-- Work on feature branches.
-- No direct pushes to main.
-- All changes require a pull request.
-- At least one teammate must review each pull request.
-- ESLint and Prettier must be used before submitting changes.
+- Work on feature branches; do not push directly to `main`.
+- Submit changes through pull requests and have at least one teammate review each pull request.
+- Use ESLint and Prettier to maintain code quality.
+- Track project tasks and remaining work through GitHub Issues.
+
+## Project Repository
+
+[https://github.com/Nick2590/community-volunteer-hub](https://github.com/Nick2590/community-volunteer-hub)

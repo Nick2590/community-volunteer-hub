@@ -29,6 +29,24 @@ export default function NavLinks() {
                 </li>
                 <li>
                     <Link
+                        href="/projects/new"
+                        className={pathname === "/projects/new" ? "text-emerald-700" : ""}
+                        aria-current={pathname === "/projects/new" ? "page" : undefined}
+                    >
+                    Post an Opportunity
+                    </Link>
+                </li>
+                <li>
+                    <Link
+                        href="/dashboard"
+                        className={pathname === "/dashboard" ? "text-emerald-700" : ""}
+                        aria-current={pathname === "/dashboard" ? "page" : undefined}
+                    >
+                    Dashboard
+                    </Link>
+                </li>
+                <li>
+                    <Link
                         href="/organizations"
                         className={pathname.startsWith("/organizations") ? "text-emerald-700" : ""}
                         aria-current={pathname.startsWith("/organizations") ? "page" : undefined}

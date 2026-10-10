@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: '%s | Community Volunteer Hub',
   },
   description:
-    'Connect volunteer with local organizations and community serivce opportunities.',
+    'Connect volunteers with local organizations and community service opportunities.',
   metadataBase: new URL('https://community-volunteer-hub-ebon.vercel.app/'),
 };
 

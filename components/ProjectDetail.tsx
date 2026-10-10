@@ -1,13 +1,19 @@
 import Link from 'next/link';
+import DeleteProjectButton from '@/components/DeleteProjectButton';
 import ProjectSignupButton from '@/components/ProjectSignupButton';
 import type { Organization, Project } from '@/types/project';
 
 interface ProjectDetailProps {
   project: Project;
   organization?: Organization;
+  canManage?: boolean;
 }
 
-export default function ProjectDetail({ project, organization }: ProjectDetailProps) {
+export default function ProjectDetail({
+  project,
+  organization,
+  canManage = false,
+}: ProjectDetailProps) {
   return (
     <article className="mx-auto w-full max-w-3xl">
       <Link
@@ -71,6 +77,32 @@ export default function ProjectDetail({ project, organization }: ProjectDetailPr
         <div className="mt-8 flex justify-end">
           <ProjectSignupButton projectId={project.id} />
         </div>
+
+        {canManage && (
+          <section
+            className="mt-8 border-t border-slate-200 pt-6"
+            aria-labelledby="project-manage-heading"
+          >
+            <h2
+              id="project-manage-heading"
+              className="text-lg font-semibold text-slate-900"
+            >
+              Manage this project
+            </h2>
+            <div className="mt-4 flex flex-wrap items-start gap-3">
+              <Link
+                href={`/projects/${encodeURIComponent(project.id)}/edit`}
+                className="rounded-md border border-emerald-800 px-4 py-2 font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+              >
+                Edit project
+              </Link>
+              <DeleteProjectButton
+                projectId={project.id}
+                projectTitle={project.title}
+              />
+            </div>
+          </section>
+        )}
       </div>
     </article>
   );
