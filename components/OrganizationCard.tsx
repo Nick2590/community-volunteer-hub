@@ -18,12 +18,12 @@ export default function OrganizationCard({ organization }: OrganizationCardProps
         <p className="mt-3 text-sm leading-6 text-slate-600">{organization.description}</p>
         <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm">
           <div>
-            <dt className="font-medium text-slate-500">Email</dt>
+            <dt className="font-medium text-slate-600">Email</dt>
             <dd className="mt-1 text-slate-800">{organization.contactEmail}</dd>
           </div>
           {organization.phoneNumber && (
             <div>
-              <dt className="font-medium text-slate-500">Phone</dt>
+              <dt className="font-medium text-slate-600">Phone</dt>
               <dd className="mt-1 text-slate-800">{organization.phoneNumber}</dd>
             </div>
           )}

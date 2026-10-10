@@ -54,7 +54,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-md flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-md flex-1 bg-slate-50 px-4 py-12 text-slate-900 sm:px-6">
       <h1 className="text-3xl font-bold text-slate-900">
         Create Account
       </h1>
@@ -77,7 +77,7 @@ export default function RegisterPage() {
             type="text"
             required
             autoComplete="name"
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           />
         </div>
 
@@ -94,7 +94,7 @@ export default function RegisterPage() {
             type="email"
             required
             autoComplete="email"
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           />
         </div>
 
@@ -112,7 +112,7 @@ export default function RegisterPage() {
             required
             minLength={8}
             autoComplete="new-password"
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           />
         </div>
 
@@ -128,7 +128,7 @@ export default function RegisterPage() {
             name="role"
             required
             defaultValue=""
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           >
             <option value="" disabled>
               Select an account type
@@ -141,7 +141,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-md bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-emerald-800 px-4 py-2 font-semibold text-white hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? 'Creating Account...' : 'Create Account'}
         </button>
@@ -161,14 +161,14 @@ export default function RegisterPage() {
         Already have an account?{' '}
         <Link
           href="/login"
-          className="font-semibold text-emerald-700 hover:text-emerald-800"
+          className="font-semibold text-emerald-700 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
         >
           Sign In
         </Link>
       </p>
 
       <p className="mt-3 text-center text-sm">
-        <Link href="/" className="text-slate-600 hover:text-emerald-700">
+        <Link href="/" className="text-slate-600 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
           Back to Home
         </Link>
       </p>

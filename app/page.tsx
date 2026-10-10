@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function Home() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-slate-50 text-slate-900">
-      <main id="home" className="flex-1">
+      <main className="flex-1">
         <section className="bg-emerald-800 px-6 py-20 text-white sm:py-28">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
@@ -19,12 +19,12 @@ export default function Home() {
               >
                 Browse Opportunities
               </Link>
-              <a
-                href="#post-opportunity"
+              <Link
+                href="/projects/new"
                 className="rounded-md border border-white px-5 py-3 text-center font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-800"
               >
                 Post an Opportunity
-              </a>
+              </Link>
             </div>
           </div>
         </section>

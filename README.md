@@ -2,6 +2,20 @@
 
 Community Volunteer Hub connects volunteers with local organizations and community service opportunities. Volunteers can browse and search sample and organization-created project listings, view project and organization details, create accounts, and sign up for projects. Organization-created projects are stored in Neon PostgreSQL.
 
+## About the Project
+
+### Problem
+
+Local organizations often struggle to reach willing volunteers, and volunteers have no single place to find nearby opportunities, sign up, and keep track of what they have committed to. Information is scattered across social media posts, flyers, and email threads.
+
+### Solution
+
+Community Volunteer Hub gives organizations one place to post and manage volunteer opportunities, and gives volunteers one place to discover them, sign up, and manage their signups from a personal dashboard.
+
+### Intended Audience
+
+- **Volunteers:** community members who want to find, join, and track local volunteer projects.
+- **Organizations:** nonprofits, neighborhood groups, and schools that need volunteers and want to publish and manage projects.
 ## Live Application
 
 [https://community-volunteer-hub-ebon.vercel.app/](https://community-volunteer-hub-ebon.vercel.app/)
@@ -24,6 +38,9 @@ Community Volunteer Hub connects volunteers with local organizations and communi
 - Volunteer project signup, including duplicate-signup prevention and reactivation of canceled signups
 - Volunteer dashboard for viewing joined projects and canceling confirmed signups
 - Organization-only project creation at `/projects/new`; projects are associated with the signed-in organization account
+- Organization project editing at `/projects/[id]/edit`, available only to the organization that owns the project
+- Organization project deletion with a confirmation step; existing confirmed volunteer signups are changed to `CANCELED` and kept as history
+- Responsive navigation that shows My Account and Sign Out for signed-in users, a skip-to-main-content link, and custom 404 and error pages
 
 The existing sample projects remain available alongside database projects. Newly created database projects appear in the same opportunity list, search results, and project detail route.
 
@@ -46,12 +63,22 @@ The existing sample projects remain available alongside database projects. Newly
 | `/projects/[id]`      | View a project and its signup option                        |
 | `/dashboard`          | View volunteer project signups and cancel confirmed signups |
 | `/projects/new`       | Organization-only project creation form                     |
+| `/projects/[id]/edit` | Organization-only form to edit a project the organization owns |
 | `/organizations`      | Browse organizations                                        |
 | `/organizations/[id]` | View an organization                                        |
 | `/register`           | Create a Volunteer or Organization account                  |
 | `/login`              | Sign in                                                     |
 | `/account`            | View account information and sign out                       |
 
+## Design System
+
+- **Palette:** emerald is the brand color. `emerald-800` is used for primary buttons and headings (white text on it has a contrast ratio of about 7.7:1) and `emerald-700` for links and hover states. Slate shades provide text (`slate-900`, `slate-700`, `slate-600`), borders (`slate-200`, `slate-300`), and the `slate-50` page background. White is used for cards, the header, and the footer. Red (`red-800`) is reserved for destructive actions such as deleting a project.
+- **Typography:** Geist Sans, loaded with `next/font` and applied to the whole site. Headings use Tailwind's `text-3xl`/`text-4xl` (page titles) down to `text-lg`/`text-xl` (section titles), with `text-sm` for labels and secondary text.
+- **Components:** reusable components live in [`components/`](./components).
+  - Used on every page through the root layout: `Header`, `NavLink` (the main navigation), and `Footer`.
+  - Used on more than one page: `ProjectCard` (the opportunities list and each organization's detail page) and `ProjectForm` (create and edit).
+  - Also shared: `PageMessage` (the 404 and error pages), `ProjectDetail`, `OrganizationCard`, `ProjectSignupButton`, `DeleteProjectButton`, and `VolunteerDashboard`.
+- **Accessibility:** a skip-to-main-content link, visible `focus-visible` outlines, labeled form fields, `aria-current` on the active navigation link, `role="alert"` and `role="status"` for feedback messages, and an accessible confirmation dialog for deleting projects.
 ## Local Setup
 
 ### Requirements
@@ -123,7 +150,7 @@ npm run lint
 
 ## Authentication
 
-Authentication uses custom email-and-password flows backed by Neon PostgreSQL; the project does not use Auth.js or Clerk. Register at `/register` with a name, email, password of at least eight characters, and either the Volunteer or Organization role. Sign in at `/login`; the `/account` page shows the current account and provides sign-out.
+Authentication uses custom email-and-password flows backed by Neon PostgreSQL; the project does not use Auth.js or Clerk. **Note:** the course specification lists Auth.js v5 or Clerk for authentication. This custom implementation still needs instructor confirmation that it is acceptable. Register at `/register` with a name, email, password of at least eight characters, and either the Volunteer or Organization role. Sign in at `/login`; the `/account` page shows the current account and provides sign-out.
 
 Passwords are hashed with bcrypt using cost factor 12. On sign-in, the application creates a random session token and stores only its SHA-256 hash in the `sessions` table. The session cookie is HTTP-only and `SameSite=Lax`, with `Secure` enabled in production. Sessions expire after seven days; expired sessions are rejected and removed, and signing out deletes the database session. Server-side code can use `getCurrentUser()` from [`app/lib/auth.ts`](./app/lib/auth.ts) to check the signed-in user. Authentication endpoints that need the database return HTTP 503 when `DATABASE_URL` is not configured.
 
@@ -144,6 +171,17 @@ Passwords are hashed with bcrypt using cost factor 12. On sign-in, the applicati
 
 Project signup records are stored in PostgreSQL. Sample projects retain their existing IDs and details; database projects are read through the shared server-side project data layer and appear alongside those samples. Project creation and editing ownership is derived from the authenticated Organization account, not from submitted form data. When an organization deletes one of its database-backed projects, existing confirmed volunteer signups are preserved as history and changed to `CANCELED` before the project record is removed.
 
+## Testing the Application (for Graders)
+
+No pre-made accounts are required, and no credentials are published in this repository. Anyone can create test accounts on the live site:
+
+1. Go to `/register` and create an **Organization** account (choose the Organization account type), then sign in at `/login`.
+2. Create a project at `/projects/new`. Open its detail page and use **Edit** (`/projects/[id]/edit`) and **Delete** (with the confirmation step) to try editing and deleting.
+3. Sign out from the navigation, then create and sign in with a **Volunteer** account in the same way.
+4. As the volunteer, open a project, sign up, and view and cancel the signup on `/dashboard`.
+5. Confirm the permission rules: a Volunteer cannot create, edit, or delete projects, and an Organization cannot edit or delete another organization's projects (they receive a not-found page).
+
+The three sample projects and sample organizations are static demo data. They can be browsed and signed up for, but cannot be edited or deleted. If you would like pre-made demo accounts, ask the team to share credentials privately.
 ## Deployment
 
 The application is deployed on Vercel:
@@ -160,14 +198,24 @@ To deploy another instance:
 
 Never expose database credentials in client-side environment variables.
 
-## Known Issues and Unfinished Features
+## Known Issues and Future Improvements
 
-- **Issue #9 — Project creation:** organizations can create projects through `/projects/new` and `POST /api/projects`, and projects are saved to the Neon `projects` table. Complete; real database integration testing passed.
-- The homepage's Post an Opportunity button should link to `/projects/new` instead of the footer.
-- Header navigation for authenticated users should make My Account and Sign Out easier to access.
+### Known issues
+
+- **Authentication requirement:** authentication is custom, not Auth.js or Clerk. Instructor confirmation is still needed (see [Authentication](#authentication)).
+- Organization pages and the three sample projects are static data; organizations are not database records, so organization pages do not list database-created projects.
 - Volunteer signup does not enforce project capacity.
-- Complete Lighthouse mobile testing and CSS Overview color-contrast verification.
+- Lighthouse mobile scores and a full color-contrast audit have not been completed. Contrast ratios were calculated by hand but not verified with an audit tool.
+- The navigation checks the signed-in user with a request after the page loads, so the Sign In or My Account/Sign Out links appear a moment after the page renders.
 
+### Future improvements
+
+- Move to Auth.js v5 or Clerk if the instructor requires it.
+- Store organization profiles in the database and show their projects on their pages.
+- Add project capacity limits and waitlists.
+- Add profile management and password reset.
+- Add pagination and filtering (by date and location) to the opportunities list.
+- Add automated tests and a database migration tool.
 ## Development Workflow
 
 - Work on feature branches; do not push directly to `main`.

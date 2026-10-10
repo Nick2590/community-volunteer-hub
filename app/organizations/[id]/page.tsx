@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getOrganizationById } from '@/data/projects';
+import ProjectCard from '@/components/ProjectCard';
+import { getOrganizationById, projects } from '@/data/projects';
 
 interface OrganizationDetailPageProps {
   params: Promise<{ id: string }>;
@@ -34,6 +35,10 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
     notFound();
   }
 
+  const organizationProjects = projects.filter(
+    (project) => project.organizationId === organization.id
+  );
+
   return (
     <main className="min-h-full flex-1 bg-slate-50 px-6 py-12 text-slate-900 sm:py-16">
       <article className="mx-auto w-full max-w-3xl">
@@ -63,7 +68,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
             </h2>
             <dl className="mt-4 grid gap-5 sm:grid-cols-2">
               <div>
-                <dt className="text-sm font-medium text-slate-500">Email</dt>
+                <dt className="text-sm font-medium text-slate-600">Email</dt>
                 <dd className="mt-1 text-slate-900">
                   <a href={`mailto:${organization.contactEmail}`} className={linkClassName}>
                     {organization.contactEmail}
@@ -72,7 +77,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
               </div>
               {organization.phoneNumber && (
                 <div>
-                  <dt className="text-sm font-medium text-slate-500">Phone</dt>
+                  <dt className="text-sm font-medium text-slate-600">Phone</dt>
                   <dd className="mt-1 text-slate-900">
                     <a href={`tel:${organization.phoneNumber}`} className={linkClassName}>
                       {organization.phoneNumber}
@@ -82,6 +87,27 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
               )}
             </dl>
           </section>
+
+          {organizationProjects.length > 0 && (
+            <section
+              className="mt-6 border-t border-slate-200 pt-6"
+              aria-labelledby="organization-projects-heading"
+            >
+              <h2
+                id="organization-projects-heading"
+                className="text-lg font-semibold text-slate-900"
+              >
+                Volunteer opportunities
+              </h2>
+              <ul className="mt-4 grid gap-5 sm:grid-cols-2">
+                {organizationProjects.map((project) => (
+                  <li key={project.id}>
+                    <ProjectCard project={project} headingLevel="h3" />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </article>
     </main>
