@@ -1,6 +1,13 @@
 import ProjectCard from '@/components/ProjectCard';
 import { getProjects } from '@/app/lib/projects';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Opportunities',
+  description:
+    'Browse a list of volunteer opportunities provided by different communities.',
+}
 
 export default async function ProjectsPage({
   searchParams,

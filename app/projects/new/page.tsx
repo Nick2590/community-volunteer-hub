@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/app/lib/auth';
 import ProjectForm from '@/components/ProjectForm';
 
 export const metadata: Metadata = {
-  title: 'Create a Project | Community Volunteer Hub',
+  title: 'Create a Project',
   description: 'Create a volunteer project for your organization.',
 };
 

@@ -7,7 +7,7 @@ import { getOwnedProject } from '@/app/lib/projects';
 import ProjectForm from '@/components/ProjectForm';
 
 export const metadata: Metadata = {
-  title: 'Edit Project | Community Volunteer Hub',
+  title: 'Edit Project',
   description: 'Edit a volunteer project for your organization.',
 };
 
