@@ -160,7 +160,7 @@ Never expose database credentials in client-side environment variables.
 
 ## Known Issues and Unfinished Features
 
-- **Issue #9 — Project creation:** database-backed implementation is in place, but apply the new `projects` schema to Neon and complete real database project-creation testing before marking the issue complete.
+- **Issue #9 — Project creation:** organizations can create projects through `/projects/new` and `POST /api/projects`, and projects are saved to the Neon `projects` table. Complete; real database integration testing passed.
 - **Issue #10 — Project editing and deleting:** unfinished.
 - The homepage's Post an Opportunity button should link to `/projects/new` instead of the footer.
 - Header navigation for authenticated users should make My Account and Sign Out easier to access.
