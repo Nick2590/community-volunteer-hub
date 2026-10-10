@@ -40,6 +40,15 @@ export default async function ProjectsPage({
           </p>
         </header>
 
+        {searchParamsValue.deleted === '1' && (
+          <p
+            role="status"
+            className="mt-6 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-emerald-950"
+          >
+            Project deleted. Existing volunteer signups were canceled.
+          </p>
+        )}
+
         <form
           action="/projects"
           method="get"

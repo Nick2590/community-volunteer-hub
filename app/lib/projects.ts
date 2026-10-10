@@ -20,7 +20,15 @@ function isMissingProjectsTable(error: unknown): boolean {
   );
 }
 
-function toProjectDate(value: string | Date): string {
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Database project IDs are UUIDs; sample project IDs are slugs.
+export function isDatabaseProjectId(id: string): boolean {
+  return UUID_PATTERN.test(id);
+}
+
+export function toProjectDate(value: string | Date): string {
   if (value instanceof Date) {
     return value.toISOString().slice(0, 10);
   }
@@ -64,6 +72,47 @@ export async function getProjects(): Promise<Project[]> {
 
     throw error;
   }
+}
+
+// Returns the project only when it is a database project owned by the user.
+export async function getOwnedProject(
+  id: string,
+  userId: string
+): Promise<Project | undefined> {
+  if (!isDatabaseProjectId(id)) {
+    return undefined;
+  }
+
+  const sql = getDatabase();
+  const rows = (await sql`
+    SELECT projects.id::text AS id,
+           projects.title,
+           projects.description,
+           projects.project_date,
+           projects.location,
+           users.name AS organization_name
+    FROM projects
+    INNER JOIN users ON users.id = projects.organization_id
+    WHERE projects.id = ${id}
+      AND projects.organization_id = ${userId}
+      AND users.role = 'ORGANIZATION'
+    LIMIT 1
+  `) as DatabaseProjectRow[];
+
+  const row = rows[0];
+
+  if (!row) {
+    return undefined;
+  }
+
+  return {
+    id: row.id,
+    title: row.title,
+    organization: row.organization_name,
+    date: toProjectDate(row.project_date),
+    location: row.location,
+    description: row.description,
+  };
 }
 
 export async function getProjectById(id: string): Promise<Project | undefined> {

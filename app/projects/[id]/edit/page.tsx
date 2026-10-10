@@ -1,15 +1,22 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 import { getCurrentUser } from '@/app/lib/auth';
+import { getOwnedProject } from '@/app/lib/projects';
 import ProjectForm from '@/components/ProjectForm';
 
 export const metadata: Metadata = {
-  title: 'Create a Project | Community Volunteer Hub',
-  description: 'Create a volunteer project for your organization.',
+  title: 'Edit Project | Community Volunteer Hub',
+  description: 'Edit a volunteer project for your organization.',
 };
 
-export default async function NewProjectPage() {
+export default async function EditProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const user = await getCurrentUser();
 
   if (!user) {
@@ -20,7 +27,7 @@ export default async function NewProjectPage() {
             Organization sign-in required
           </h1>
           <p className="mt-4 text-slate-700">
-            Sign in with an organization account to create a volunteer project.
+            Sign in with an organization account to edit a volunteer project.
           </p>
           <Link
             href="/login"
@@ -40,11 +47,28 @@ export default async function NewProjectPage() {
           className="mx-auto max-w-2xl rounded-md border border-amber-300 bg-amber-50 p-5 text-amber-950"
           role="alert"
         >
-          Project creation is only available to organization accounts.
+          Project editing is only available to organization accounts.
         </p>
       </main>
     );
   }
 
-  return <ProjectForm mode="create" />;
+  const project = await getOwnedProject(id, user.id);
+
+  if (!project) {
+    notFound();
+  }
+
+  return (
+    <ProjectForm
+      mode="edit"
+      projectId={project.id}
+      initialValues={{
+        title: project.title,
+        project_date: project.date,
+        location: project.location,
+        description: project.description,
+      }}
+    />
+  );
 }
