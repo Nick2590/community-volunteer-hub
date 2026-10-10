@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
+import { getProjectById } from '@/app/lib/projects';
 import ProjectDetail from '@/components/ProjectDetail';
-import { getOrganizationById, projects } from '@/data/projects';
+import { getOrganizationById } from '@/data/projects';
 
 export default async function ProjectDetailPage({
   params,
@@ -8,7 +9,7 @@ export default async function ProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = projects.find((availableProject) => availableProject.id === id);
+  const project = await getProjectById(id);
 
   if (!project) {
     notFound();

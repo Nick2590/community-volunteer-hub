@@ -1,6 +1,6 @@
 # Community Volunteer Hub
 
-Community Volunteer Hub connects volunteers with local organizations and community service opportunities. Volunteers can browse and search project listings, view project and organization details, create accounts, and sign up for projects. Project listings currently come from application data; organization project creation and management are not yet backed by the database.
+Community Volunteer Hub connects volunteers with local organizations and community service opportunities. Volunteers can browse and search sample and organization-created project listings, view project and organization details, create accounts, and sign up for projects. Organization-created projects are stored in Neon PostgreSQL.
 
 ## Live Application
 
@@ -23,9 +23,9 @@ Community Volunteer Hub connects volunteers with local organizations and communi
 - Email-and-password sign-in, account information, and sign-out
 - Volunteer project signup, including duplicate-signup prevention and reactivation of canceled signups
 - Volunteer dashboard for viewing joined projects and canceling confirmed signups
-- Project creation form at `/projects/new` with required-field validation; it does not save projects yet
+- Organization-only project creation at `/projects/new`; projects are associated with the signed-in organization account
 
-Project listings are currently provided by application data and are not managed through a project API.
+The existing sample projects remain available alongside database projects. Newly created database projects appear in the same opportunity list, search results, and project detail route.
 
 ## Technologies
 
@@ -39,25 +39,25 @@ Project listings are currently provided by application data and are not managed 
 
 ## Application Pages
 
-| Route                 | Description                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| `/`                   | Homepage                                                                           |
-| `/projects`           | Browse and search volunteer opportunities                                          |
-| `/projects/[id]`      | View a project and its signup option                                               |
-| `/dashboard`          | View volunteer project signups and cancel confirmed signups                        |
-| `/projects/new`       | Project creation form; database saving and organization-only access are unfinished |
-| `/organizations`      | Browse organizations                                                               |
-| `/organizations/[id]` | View an organization                                                               |
-| `/register`           | Create a Volunteer or Organization account                                         |
-| `/login`              | Sign in                                                                            |
-| `/account`            | View account information and sign out                                              |
+| Route                 | Description                                                 |
+| --------------------- | ----------------------------------------------------------- |
+| `/`                   | Homepage                                                    |
+| `/projects`           | Browse and search volunteer opportunities                   |
+| `/projects/[id]`      | View a project and its signup option                        |
+| `/dashboard`          | View volunteer project signups and cancel confirmed signups |
+| `/projects/new`       | Organization-only project creation form                     |
+| `/organizations`      | Browse organizations                                        |
+| `/organizations/[id]` | View an organization                                        |
+| `/register`           | Create a Volunteer or Organization account                  |
+| `/login`              | Sign in                                                     |
+| `/account`            | View account information and sign out                       |
 
 ## Local Setup
 
 ### Requirements
 
 - Node.js and npm
-- A Neon PostgreSQL database for authentication and volunteer signups
+- A Neon PostgreSQL database for authentication, volunteer signups, and organization-created projects
 - The PostgreSQL command-line client (`psql`) to apply the schema
 
 ### Install and configure
@@ -117,7 +117,7 @@ npm run lint
    psql "<NEON_CONNECTION_STRING>" -f database/schema.sql
    ```
 
-   This creates the `users`, `sessions`, and `volunteer_signups` tables, indexes, and constraints. It also adds `sessions.expires_at` to existing session tables when needed. Project records are not stored in this schema.
+   This creates the `users`, `sessions`, `volunteer_signups`, and `projects` tables, indexes, and constraints. It also adds `sessions.expires_at` to existing session tables when needed. The project table links ownership to the organization account in `users`; applying this schema is required for project creation and database-backed project listings.
 
 4. Keep database credentials out of source control. The local `.env.local` file should not be committed.
 
@@ -135,11 +135,12 @@ Passwords are hashed with bcrypt using cost factor 12. On sign-in, the applicati
 | `/api/auth/login`           | POST   | Signs in with `email` and `password`. Returns 400 for invalid input and 401 for invalid credentials.                                                                                                                            |
 | `/api/auth/logout`          | POST   | Deletes the current database session when present and clears the session cookie.                                                                                                                                                |
 | `/api/auth/me`              | GET    | Returns the signed-in user, or 401 when no valid session exists.                                                                                                                                                                |
+| `/api/projects`             | POST   | Creates a project for the signed-in Organization account. Returns 401 when signed out, 403 for Volunteer accounts, 400 for invalid input, and 201 with the created project's public data on success.                            |
 | `/api/volunteer/dashboard`  | GET    | Returns the authenticated volunteer's name and project signup details. Returns 401 when signed out and 403 for Organization accounts.                                                                                           |
 | `/api/projects/[id]/signup` | POST   | Signs up the current Volunteer for an existing project. Returns 401 when signed out, 403 for Organization accounts, 404 for an unknown project, and 409 for an existing confirmed signup. A canceled signup can be reactivated. |
 | `/api/projects/[id]/signup` | DELETE | Cancels the authenticated volunteer's confirmed signup for the project. Returns 401 when signed out, 403 for Organization accounts, and 404 when the project or confirmed signup is not found.                                  |
 
-Project signup records are stored in PostgreSQL. The project is looked up in the current application data, and there are no project creation, editing, or deletion API routes yet.
+Project signup records are stored in PostgreSQL. Sample projects retain their existing IDs and details; database projects are read through the shared server-side project data layer and appear alongside those samples. Project creation ownership is derived from the authenticated Organization account, not from submitted form data.
 
 ## Deployment
 
@@ -159,11 +160,11 @@ Never expose database credentials in client-side environment variables.
 
 ## Known Issues and Unfinished Features
 
-- **Issue #9 — Project creation:** the form is implemented, but saving projects to the database and restricting creation to Organization accounts are unfinished.
+- **Issue #9 — Project creation:** database-backed implementation is in place, but apply the new `projects` schema to Neon and complete real database project-creation testing before marking the issue complete.
 - **Issue #10 — Project editing and deleting:** unfinished.
 - The homepage's Post an Opportunity button should link to `/projects/new` instead of the footer.
 - Header navigation for authenticated users should make My Account and Sign Out easier to access.
-- Newly created projects cannot appear in listings until database-backed project storage and listing are implemented.
+- Database project creation and listing require the new `projects` table to be applied to Neon.
 - Volunteer signup does not enforce project capacity.
 - Complete Lighthouse mobile testing and CSS Overview color-contrast verification.
 
