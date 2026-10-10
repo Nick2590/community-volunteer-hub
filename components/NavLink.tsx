@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
-import type { AuthResponse, AuthUser } from '@/app/lib/auth-types';
+import { signOut, useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 interface NavItem {
   href: string;
@@ -26,47 +25,18 @@ const linkClassName =
 export default function NavLinks() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const { data: session, status } = useSession();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // Re-check the session on every navigation so the nav reflects sign-in and sign-out.
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function loadUser() {
-      try {
-        const response = await fetch('/api/auth/me');
-        const data = (await response.json()) as AuthResponse;
-
-        if (isCurrent) {
-          setUser(response.ok && data.user ? data.user : null);
-        }
-      } catch {
-        if (isCurrent) {
-          setUser(null);
-        }
-      } finally {
-        if (isCurrent) {
-          setAuthChecked(true);
-        }
-      }
-    }
-
-    void loadUser();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [pathname]);
+  const authChecked = status !== 'loading';
+  const user = session?.user ?? null;
 
   async function handleSignOut() {
     setIsSigningOut(true);
 
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await signOut({ redirect: false });
     } finally {
-      setUser(null);
       setIsSigningOut(false);
       router.push('/login');
       router.refresh();

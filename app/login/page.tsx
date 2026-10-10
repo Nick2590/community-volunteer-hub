@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { FormEvent, useState } from 'react';
-
-import type { AuthResponse } from '@/app/lib/auth-types';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,26 +25,21 @@ export default function LoginPage() {
     const password = String(formData.get('password') ?? '');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
       });
 
-      const data = (await response.json()) as AuthResponse;
-
-      setMessage(data.message);
-      setIsError(!response.ok);
-
-      if (response.ok) {
-        router.push('/account');
-        router.refresh();
+      if (!result || result.error) {
+        setIsError(true);
+        setMessage('Invalid email or password.');
+        return;
       }
+
+      setMessage('Signed in successfully.');
+      router.push('/account');
+      router.refresh();
     } catch {
       setIsError(true);
       setMessage(

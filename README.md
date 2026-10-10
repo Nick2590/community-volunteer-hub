@@ -50,6 +50,7 @@ The existing sample projects remain available alongside database projects. Newly
 - React and TypeScript
 - Tailwind CSS
 - Neon PostgreSQL with the Neon serverless driver
+- Auth.js v5 (`next-auth`) with the Credentials provider and JWT sessions
 - bcryptjs for password hashing
 - Vercel
 - ESLint and Prettier
@@ -102,13 +103,13 @@ The existing sample projects remain available alongside database projects. Newly
    npm install
    ```
 
-3. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to the connection string for your Neon database. Keep the connection string secret and never commit `.env.local`.
+3. Copy `.env.example` to `.env.local` and fill in the values below. Keep them secret and never commit `.env.local`.
 
-   `.env.example` documents the only environment variable currently used by the application:
-
-   | Variable       | Required                          | Description                       |
-   | -------------- | --------------------------------- | --------------------------------- |
-   | `DATABASE_URL` | Yes, for database-backed features | Neon PostgreSQL connection string |
+   | Variable          | Required                          | Description                                                                                                  |
+   | ----------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+   | `DATABASE_URL`    | Yes, for database-backed features | Neon PostgreSQL connection string                                                                            |
+   | `AUTH_SECRET`     | Yes, for sign-in                  | Random secret that signs Auth.js session tokens. Generate one with `npx auth secret` or `openssl rand -base64 32` |
+   | `AUTH_TRUST_HOST` | Local production runs only        | Set to `true` when running `npm run build` and `npm start` locally. Vercel detects the host automatically.      |
 
 4. Apply the database schema as described in [Neon Database Setup](#neon-database-setup).
 
@@ -150,14 +151,22 @@ npm run lint
 
 ## Authentication
 
-Authentication uses custom email-and-password flows backed by Neon PostgreSQL; the project does not use Auth.js or Clerk. **Note:** the course specification lists Auth.js v5 or Clerk for authentication. This custom implementation still needs instructor confirmation that it is acceptable. Register at `/register` with a name, email, password of at least eight characters, and either the Volunteer or Organization role. Sign in at `/login`; the `/account` page shows the current account and provides sign-out.
+Authentication uses **Auth.js v5** (`next-auth@5.0.0-beta.32`) with the **Credentials provider** and **JWT sessions**, configured in [`auth.ts`](./auth.ts) and served from [`app/api/auth/[...nextauth]/route.ts`](./app/api/auth/%5B...nextauth%5D/route.ts). Users are stored in the existing Neon `users` table; no separate Auth.js tables or adapter are used.
 
-Passwords are hashed with bcrypt using cost factor 12. On sign-in, the application creates a random session token and stores only its SHA-256 hash in the `sessions` table. The session cookie is HTTP-only and `SameSite=Lax`, with `Secure` enabled in production. Sessions expire after seven days; expired sessions are rejected and removed, and signing out deletes the database session. Server-side code can use `getCurrentUser()` from [`app/lib/auth.ts`](./app/lib/auth.ts) to check the signed-in user. Authentication endpoints that need the database return HTTP 503 when `DATABASE_URL` is not configured.
+- **Registration:** register at `/register` with a name, email, password of at least eight characters, and either the Volunteer or Organization role. `POST /api/auth/register` hashes the password with bcrypt (cost 12) and creates the user, then the page signs the new user in through Auth.js.
+- **Sign in:** `/login` calls Auth.js `signIn('credentials')`. The Credentials `authorize()` function validates the input, looks up the user in Neon with a parameterized query, and verifies the password with bcryptjs. The role always comes from the database and is never accepted from the form.
+- **Sessions:** the signed, encrypted JWT (HTTP-only cookie) stores the user ID and role and lasts seven days. It is signed with `AUTH_SECRET`.
+- **Roles:** `VOLUNTEER` and `ORGANIZATION`, stored in `users.role`.
+- **Server-side checks:** `getCurrentUser()` in [`app/lib/auth.ts`](./app/lib/auth.ts) reads the Auth.js session, then re-reads the user's current name, email, and role from the `users` table. A deleted user is treated as signed out, and a stale role in the token is never trusted. API routes and pages use it for role and project-ownership checks.
+- **Sign out:** the navigation and `/account` page call Auth.js `signOut()`.
+- **Legacy table:** the old `sessions` table from the previous custom login is no longer used but is left in the database. Sessions created before the migration are invalid, so users sign in once again.
 
+Authentication endpoints that need the database return HTTP 503 when `DATABASE_URL` is not configured.
 ## API Documentation
 
 | Route                       | Method | Description                                                                                                                                                                                                                     |
 | --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/auth/[...nextauth]` | GET, POST | Auth.js handler for sign-in (`/api/auth/callback/credentials`), sign-out, session, and CSRF endpoints. Used through `next-auth/react`. |
 | `/api/auth/register`        | POST   | Creates an account from `name`, `email`, `password` (at least eight characters), and `role` (`volunteer` or `organization`). Returns 400 for invalid input and 409 for a duplicate email.                                       |
 | `/api/auth/login`           | POST   | Signs in with `email` and `password`. Returns 400 for invalid input and 401 for invalid credentials.                                                                                                                            |
 | `/api/auth/logout`          | POST   | Deletes the current database session when present and clears the session cookie.                                                                                                                                                |
@@ -182,6 +191,7 @@ No pre-made accounts are required, and no credentials are published in this repo
 5. Confirm the permission rules: a Volunteer cannot create, edit, or delete projects, and an Organization cannot edit or delete another organization's projects (they receive a not-found page).
 
 The three sample projects and sample organizations are static demo data. They can be browsed and signed up for, but cannot be edited or deleted. If you would like pre-made demo accounts, ask the team to share credentials privately.
+
 ## Deployment
 
 The application is deployed on Vercel:
@@ -191,7 +201,7 @@ The application is deployed on Vercel:
 To deploy another instance:
 
 1. Import the GitHub repository into Vercel.
-2. Add `DATABASE_URL` in the Vercel project settings.
+2. Add `DATABASE_URL` and `AUTH_SECRET` in the Vercel project settings (use a newly generated random `AUTH_SECRET`; never reuse the local one or commit it).
 3. Apply [`database/schema.sql`](./database/schema.sql) to the Neon database used by the deployment.
 4. Deploy the application.
 5. Verify registration, sign-in, project browsing, organization project creation/editing/deletion, volunteer dashboard access, signup, and cancellation in the deployed environment.
@@ -202,15 +212,15 @@ Never expose database credentials in client-side environment variables.
 
 ### Known issues
 
-- **Authentication requirement:** authentication is custom, not Auth.js or Clerk. Instructor confirmation is still needed (see [Authentication](#authentication)).
+- Auth.js v5 is still published as a beta release (`next-auth@5.0.0-beta.32`). JWT sessions cannot be revoked server-side; `getCurrentUser()` re-checks the database, but the navigation may show Sign Out until the session cookie is cleared if an account is deleted.
 - Organization pages and the three sample projects are static data; organizations are not database records, so organization pages do not list database-created projects.
 - Volunteer signup does not enforce project capacity.
 - Lighthouse mobile scores and a full color-contrast audit have not been completed. Contrast ratios were calculated by hand but not verified with an audit tool.
-- The navigation checks the signed-in user with a request after the page loads, so the Sign In or My Account/Sign Out links appear a moment after the page renders.
+- The navigation reads the Auth.js session in the browser, so the Sign In or My Account/Sign Out links appear a moment after the page renders.
 
 ### Future improvements
 
-- Move to Auth.js v5 or Clerk if the instructor requires it.
+- Move to a stable Auth.js release when v5 is no longer in beta.
 - Store organization profiles in the database and show their projects on their pages.
 - Add project capacity limits and waitlists.
 - Add profile management and password reset.

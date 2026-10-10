@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import AuthProvider from '@/components/AuthProvider';
 import Header from '@/components/Header'
 import Footer from '@/components/Footer';
 
@@ -37,14 +38,16 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         >
           Skip to main content
         </a>
-        <Header />
-        <div
-          id="main-content"
-          tabIndex={-1}
-          className="flex flex-1 flex-col focus:outline-none"
-        >
-          {children}
-        </div>
+        <AuthProvider>
+          <Header />
+          <div
+            id="main-content"
+            tabIndex={-1}
+            className="flex flex-1 flex-col focus:outline-none"
+          >
+            {children}
+          </div>
+        </AuthProvider>
         <Footer />
       </body>
     </html>

@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { FormEvent, useState } from 'react';
 
 import type { AuthResponse, UserRole } from '@/app/lib/auth-types';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,6 +46,19 @@ export default function RegisterPage() {
 
       if (response.ok) {
         form.reset();
+
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result && !result.error) {
+          router.push('/account');
+          router.refresh();
+        } else {
+          setMessage('Account created. Please sign in to continue.');
+        }
       }
     } catch {
       setMessage(
