@@ -43,3 +43,20 @@ CREATE INDEX IF NOT EXISTS volunteer_signups_project_id_idx
 
 CREATE INDEX IF NOT EXISTS volunteer_signups_volunteer_id_idx
   ON volunteer_signups(volunteer_id);
+
+CREATE TABLE IF NOT EXISTS projects (
+  id UUID PRIMARY KEY,
+  title VARCHAR(120) NOT NULL,
+  description TEXT NOT NULL,
+  project_date DATE NOT NULL,
+  location TEXT NOT NULL,
+  organization_id UUID NOT NULL REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS projects_organization_id_idx
+  ON projects(organization_id);
+
+CREATE INDEX IF NOT EXISTS projects_project_date_idx
+  ON projects(project_date);

@@ -1,5 +1,5 @@
 import ProjectCard from '@/components/ProjectCard';
-import { projects } from '@/data/projects';
+import { getProjects } from '@/app/lib/projects';
 import Link from 'next/link';
 
 export default async function ProjectsPage({
@@ -7,14 +7,20 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const projects = await getProjects();
   const searchParamsValue = await searchParams;
   const queryParam = searchParamsValue.query;
-  const query = (Array.isArray(queryParam) ? queryParam[0] : queryParam)?.trim() ?? '';
+  const query =
+    (Array.isArray(queryParam) ? queryParam[0] : queryParam)?.trim() ?? '';
   const normalizedQuery = query.toLowerCase();
   const matchingProjects = normalizedQuery
     ? projects.filter((project) =>
-        [project.title, project.organization, project.description, project.location]
-          .some((field) => field.toLowerCase().includes(normalizedQuery)),
+        [
+          project.title,
+          project.organization,
+          project.description,
+          project.location,
+        ].some((field) => field.toLowerCase().includes(normalizedQuery))
       )
     : projects;
 
@@ -29,13 +35,21 @@ export default async function ProjectsPage({
             Volunteer Opportunities
           </h1>
           <p className="mt-4 max-w-2xl leading-7 text-slate-600">
-            Explore local projects and find a meaningful way to support your community.
+            Explore local projects and find a meaningful way to support your
+            community.
           </p>
         </header>
 
-        <form action="/projects" method="get" className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <form
+          action="/projects"
+          method="get"
+          className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end"
+        >
           <div className="flex-1">
-            <label htmlFor="project-search" className="mb-2 block text-sm font-medium text-slate-800">
+            <label
+              htmlFor="project-search"
+              className="mb-2 block text-sm font-medium text-slate-800"
+            >
               Search volunteer opportunities
             </label>
             <input
@@ -72,12 +86,16 @@ export default async function ProjectsPage({
             ))}
           </ul>
         ) : query ? (
-          <p role="status" className="mt-8 rounded-md border border-slate-200 bg-white p-6 text-slate-700">
+          <p
+            role="status"
+            className="mt-8 rounded-md border border-slate-200 bg-white p-6 text-slate-700"
+          >
             No volunteer opportunities found.
           </p>
         ) : (
           <p className="mt-8 rounded-md border border-slate-200 bg-white p-6 text-slate-700">
-            There are no volunteer opportunities available right now. Please check back soon.
+            There are no volunteer opportunities available right now. Please
+            check back soon.
           </p>
         )}
       </div>

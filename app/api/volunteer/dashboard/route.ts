@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getCurrentUser, serverErrorResponse } from '@/app/lib/auth';
 import { getDatabase } from '@/app/lib/db';
-import { projects } from '@/data/projects';
+import { getProjects } from '@/app/lib/projects';
 import type {
   VolunteerDashboardResponse,
   VolunteerDashboardSignup,
@@ -21,15 +21,22 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'Please sign in to view your volunteer dashboard.' },
-        { status: 401 },
+        {
+          success: false,
+          message: 'Please sign in to view your volunteer dashboard.',
+        },
+        { status: 401 }
       );
     }
 
     if (user.role !== 'VOLUNTEER') {
       return NextResponse.json(
-        { success: false, message: 'Volunteer dashboard access is only available to volunteers.' },
-        { status: 403 },
+        {
+          success: false,
+          message:
+            'Volunteer dashboard access is only available to volunteers.',
+        },
+        { status: 403 }
       );
     }
 
@@ -41,9 +48,10 @@ export async function GET() {
       ORDER BY signup_date DESC
     `) as SignupRow[];
 
+    const availableProjects = signupRows.length > 0 ? await getProjects() : [];
     const signups: VolunteerDashboardSignup[] = signupRows.map((signup) => {
-      const project = projects.find(
-        (availableProject) => availableProject.id === signup.project_id,
+      const project = availableProjects.find(
+        (availableProject) => availableProject.id === signup.project_id
       );
 
       return {
@@ -52,7 +60,7 @@ export async function GET() {
         signupDate: new Date(
           signup.signup_date instanceof Date
             ? signup.signup_date.getTime()
-            : signup.signup_date,
+            : signup.signup_date
         ).toISOString(),
         projectTitle: project?.title ?? 'Project no longer available',
         description:
