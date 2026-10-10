@@ -215,7 +215,7 @@ Never expose database credentials in client-side environment variables.
 - Auth.js v5 is still published as a beta release (`next-auth@5.0.0-beta.32`). JWT sessions cannot be revoked server-side; `getCurrentUser()` re-checks the database, but the navigation may show Sign Out until the session cookie is cleared if an account is deleted.
 - Organization pages and the three sample projects are static data; organizations are not database records, so organization pages do not list database-created projects.
 - Volunteer signup does not enforce project capacity.
-- Lighthouse mobile scores and a full color-contrast audit have not been completed. Contrast ratios were calculated by hand but not verified with an audit tool.
+- Lighthouse mobile testing was completed with scores of 99 for Performance, 100 for Accessibility, 100 for Best Practices, and 100 for SEO. WAVE accessibility testing on the homepage found no accessibility errors or detected contrast errors, with an AIM score of 10 out of 10. One redundant-link alert remains. Automated testing does not guarantee complete WCAG AAA compliance.
 - The navigation reads the Auth.js session in the browser, so the Sign In or My Account/Sign Out links appear a moment after the page renders.
 
 ### Future improvements
